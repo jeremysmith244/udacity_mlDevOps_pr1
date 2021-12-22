@@ -22,3 +22,16 @@ quant_columns = [
     'Total_Ct_Chng_Q4_Q1', 
     'Avg_Utilization_Ratio'
 ]
+
+resp_col = 'Churn'
+
+param_grid = { 
+    'n_estimators': [200, 500],
+    'max_features': ['auto', 'sqrt'],
+    'max_depth' : [4,5,100],
+    'criterion' :['gini', 'entropy']
+}
+
+path_to_data = './data/bank_data.csv'
+image_save_path = './images/'
+model_save_path = './models/'
