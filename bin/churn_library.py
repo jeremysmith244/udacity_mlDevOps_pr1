@@ -184,37 +184,7 @@ def perform_feature_engineering(customer_churn:DataFrame, category_lst:list, qua
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
     return X_train, X_test, y_train, y_test
 
-def classification_str_2_dataframe(classification_report:str):
-    '''
-    given string output of sklearn classification report, engineer a datframe for easy plotting
-
-    input:
-        classificaiton_report: str - output of sklearn classification report
-    output:
-        df: DatatFrame - classification report converted into plotting dataframe
-    '''
-    cols = classification_report.split('\n\n')[0].split()
-    table = classification_report.split('\n\n')[1].split('\n')
-    data = {}
-    for row in table:
-        row_list = row.split()
-        class_name = str(row_list[0])
-        class_data = [float(x) for x in row_list[1:]]
-        data[class_name] = class_data
-    df = pd.DataFrame(data).T
-    df.columns = cols
-    new_index = []
-    for num_lbl,row in df.iterrows():
-        if num_lbl == '0':
-            label = 'Retained (%s)'%row['support']
-        else:
-            label = 'Churned (%s)'%row['support']
-        new_index.append(label)
-    df.index = new_index
-    df = df.drop(columns='support')
-    return df
-
-def plot_classification_report(classification_report_df:DataFrame, full_impth:str):
+def plot_classification_report(report_str_test:str, report_str_train:str, report_name:str, impth:str):
     '''
     given plotting DataFrame, generate a heatmap plot, and save
     
@@ -224,11 +194,15 @@ def plot_classification_report(classification_report_df:DataFrame, full_impth:st
     output:
         None
     '''
-    plt.figure(figsize=(8,8))
-    sns.heatmap(classification_report_df, vmin=0, vmax=1)
-    plt.yticks(rotation=0)
-    plt.savefig(full_impth)
-    plt.close();
+    plt.figure(figsize=(5, 5))
+    plt.text(0.01, 1.25, str('%s Train'%report_name), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(report_str_train), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.6, str('%s Test'%report_name), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(report_str_test), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.axis('off')
+    plt.savefig(impth+'%s_class_report.png'%report_name)
+    plt.close;
+
 
 def classification_report_image(y_train:Series,
                                 y_test:Series,
@@ -257,15 +231,8 @@ def classification_report_image(y_train:Series,
     report_str_lr_test = classification_report(y_test, y_test_preds_lr)
     report_str_lr_train = classification_report(y_train, y_train_preds_lr)
 
-    report_df_rf_test = classification_str_2_dataframe(report_str_rf_test)
-    report_df_rf_train = classification_str_2_dataframe(report_str_rf_train)
-    report_df_lr_test = classification_str_2_dataframe(report_str_lr_test)
-    report_df_lr_train = classification_str_2_dataframe(report_str_lr_train)
-
-    plot_classification_report(report_df_rf_test, impth + 'class_report_rf_test.png')
-    plot_classification_report(report_df_rf_train, impth + 'class_report_rf_train.png')
-    plot_classification_report(report_df_lr_test, impth + 'class_report_lr_test.png')
-    plot_classification_report(report_df_lr_train, impth + 'class_report_lr_train.png')
+    plot_classification_report(report_str_rf_test, report_str_rf_train, 'RandomForest', impth)
+    plot_classification_report(report_str_lr_test, report_str_lr_train, 'LogisticRegression', impth)
 
     pass
 
@@ -332,6 +299,7 @@ def explainer_plot(rfc:RandomForestClassifier, X_test:DataFrame, impth:str):
     explainer = shap.TreeExplainer(rfc.best_estimator_)
     shap_values = explainer.shap_values(X_test)
     shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
+    plt.tight_layout()
     plt.savefig(impth + 'shap_plot.png')
     plt.close();
 
