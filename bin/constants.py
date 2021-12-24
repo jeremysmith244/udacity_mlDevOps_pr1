@@ -1,3 +1,5 @@
+import pandas as pd
+
 cat_columns = [
     'Gender',
     'Education_Level',

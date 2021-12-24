@@ -16,7 +16,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 
-from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
 
 from sklearn.linear_model import LogisticRegression
@@ -25,7 +24,16 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.metrics import plot_roc_curve, classification_report
 
+from sklearn.utils.validation import check_is_fitted
+from sklearn.exceptions import NotFittedError
+
 from constants import *
+import logging
+from pathlib import Path
+
+logging.basicConfig(
+    filename='./logging.log'
+)
 
 def import_data(pth:str):
     '''
@@ -36,9 +44,13 @@ def import_data(pth:str):
     output:
         customer_churn: df - pandas dataframe containing X,y for customer churn
     '''	
-    customer_churn = pd.read_csv(pth).drop(columns=['Unnamed: 0'])
-    customer_churn['Churn'] = customer_churn['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
-    customer_churn = customer_churn.drop(columns=['CLIENTNUM','Attrition_Flag'])
+    try:
+        customer_churn = pd.read_csv(pth).drop(columns=['Unnamed: 0'])
+        customer_churn['Churn'] = customer_churn['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+        customer_churn = customer_churn.drop(columns=['CLIENTNUM','Attrition_Flag'])
+    except FileNotFoundError:
+        logging.error('ERROR:%s, does not exist; check path...'%pth)
+        raise FileNotFoundError
     return customer_churn
 
 
@@ -52,15 +64,23 @@ def perform_eda(customer_churn:DataFrame, impth:str):
     output:
         None
     '''
-
-    for col in customer_churn.columns:
-        if is_numeric_dtype(customer_churn[col]):
-            plot_histogram(customer_churn, col, impth)    
-            plot_distogram(customer_churn, col, impth)
-        else:
-            plot_bar(customer_churn, col, impth)
-    
-    plot_heatmap(customer_churn, impth)
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+    try:
+        for col in customer_churn.columns:
+            if is_numeric_dtype(customer_churn[col]):
+                plot_histogram(customer_churn, col, impth)    
+                plot_distogram(customer_churn, col, impth)
+            else:
+                plot_bar(customer_churn, col, impth)
+        
+        plot_heatmap(customer_churn, impth)
+    except AssertionError:
+        logging.error('ERROR: Plots failed to render, check dataframe is well formed!')
+        raise AssertionError
     pass
 
 def plot_bar(customer_churn:DataFrame, col:str, impth:str):
@@ -74,6 +94,21 @@ def plot_bar(customer_churn:DataFrame, col:str, impth:str):
     output:
         None
     '''
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+    try:
+        assert not customer_churn[col].empty
+    except AssertionError:
+        logging.error('ERROR: No data for plotting!')
+        raise AssertionError
+    try:
+        assert len(customer_churn[col].unique()) < 10
+    except AssertionError:
+        logging.error('ERROR: Categorical column contains many categories, should it be cast to numeric type?')
+        raise AssertionError
     plt.figure(figsize=(20,10)) 
     customer_churn[col].value_counts('normalize').plot(kind='bar')
     plt.savefig(impth + '%s_bar.png'%col)
@@ -91,6 +126,16 @@ def plot_histogram(customer_churn:DataFrame, col:str, impth:str):
     output:
         None
     '''
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+    try:
+        assert not customer_churn[col].empty
+    except AssertionError:
+        logging.error('ERROR: No data for plotting!')
+        raise AssertionError
     plt.figure(figsize=(20,10)) 
     customer_churn[col].hist()
     plt.savefig(impth + '%s_histogram.png'%col)
@@ -107,6 +152,16 @@ def plot_distogram(customer_churn:DataFrame, col:str, impth:str):
     output:
         None
     '''
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+    try:
+        assert not customer_churn[col].empty
+    except AssertionError:
+        logging.error('ERROR: No data for plotting!')
+        raise AssertionError
     plt.figure(figsize=(20,10))  
     sns.distplot(customer_churn[col]);
     plt.savefig(impth + '%s_distogram.png'%col)
@@ -123,6 +178,16 @@ def plot_heatmap(customer_churn:DataFrame, impth:str):
     output:
         None 
     '''
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+    try:
+        assert not customer_churn.empty
+    except AssertionError:
+        logging.error('ERROR: No data for plotting!')
+        raise AssertionError
     plt.figure(figsize=(20,10))  
     sns.heatmap(customer_churn.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
     plt.savefig(impth + 'correlation_heatmap.png')
@@ -142,9 +207,17 @@ def filter_columns(customer_churn:DataFrame, category_lst:list, quant_lst:list, 
         X: DataFrame - filtered and encoded input variables
         y: Series - reponse variable series
     '''
-    X = customer_churn[quant_lst+category_lst]
-    X = encoder_helper(customer_churn, category_lst)
-    y = customer_churn[response]
+    try:
+        X = customer_churn[quant_lst+category_lst]
+        X = encoder_helper(customer_churn, category_lst)
+    except KeyError:
+        logging.error('ERROR: Some of columns defined in constants are not in data!')
+        raise KeyError
+    try:
+        y = customer_churn[response]
+    except KeyError:
+        logging.error('ERROR: %s, response column, not in data!'%response)
+        raise KeyError
     X = X.drop(columns=response)
     return X, y
 
@@ -161,7 +234,11 @@ def encoder_helper(customer_churn:DataFrame, category_lst:list):
     output:
             df: pandas dataframe with new columns for
     '''
-    one_hot_variables = pd.get_dummies(customer_churn[category_lst], drop_first=True)
+    try:
+        one_hot_variables = pd.get_dummies(customer_churn[category_lst], drop_first=True)
+    except KeyError:
+        logging.error('ERROR: Some of columns defined in constants are not in data!')
+        raise KeyError
     encoded_customer_churn = customer_churn.drop(columns=category_lst).join(one_hot_variables)
     return encoded_customer_churn
 
@@ -180,8 +257,17 @@ def perform_feature_engineering(customer_churn:DataFrame, category_lst:list, qua
         y_train: y training data
         y_test: y testing data
     '''
-    X, y = filter_columns(customer_churn, category_lst, quant_lst, response)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
+    try:
+        X, y = filter_columns(customer_churn, category_lst, quant_lst, response)
+    except KeyError:
+        logging.error('ERROR: Could not filter data and engineer columns!')
+        raise KeyError
+    try:        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
+    except ValueError:
+        # Means that dataset passed was too small probably
+        logging.error('ERROR: Could not split data, with input shapes of X:%s,%s y:%s'%(X.shape[0],X.shape[1],len(y)))
+        raise ValueError
     return X_train, X_test, y_train, y_test
 
 def plot_classification_report(report_str_test:str, report_str_train:str, report_name:str, impth:str):
@@ -194,6 +280,28 @@ def plot_classification_report(report_str_test:str, report_str_train:str, report
     output:
         None
     '''
+    
+    try:
+        assert len(report_str_test) > 0
+    except AssertionError:
+        logging.error('ERROR: Empty test string ' + report_str_test)
+        raise AssertionError
+    try:
+        assert len(report_str_train) > 0
+    except AssertionError:
+        logging.error('ERROR: Empty train string ' + report_str_train)
+        raise AssertionError
+    try:
+        assert len(report_name) > 0
+    except AssertionError:
+        logging.error('ERROR: Empty name string ' + report_name)
+        raise AssertionError
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+
     plt.figure(figsize=(5, 5))
     plt.text(0.01, 1.25, str('%s Train'%report_name), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.05, str(report_str_train), {'fontsize': 10}, fontproperties = 'monospace')
@@ -225,6 +333,19 @@ def classification_report_image(y_train:Series,
     output:
              None
     '''
+    
+    try:
+        assert not y_train.empty or y_test.empty
+    except AssertionError:
+        logging.error('ERROR: Empty y reference data passed to classification report')
+    try:
+        assert len(y_train_preds_lr) == len(y_train) and len(y_test_preds_lr) == len(y_test)
+    except AssertionError:
+        logging.error('ERROR: Length of reference data does not match length of prediction data for logistic regression!')
+    try:
+        assert len(y_train_preds_rf) == len(y_train) and len(y_test_preds_rf) == len(y_test)
+    except AssertionError:
+        logging.error('ERROR: Length of reference data does not match length of prediction data for random forest!')
 
     report_str_rf_test = classification_report(y_test, y_test_preds_rf)
     report_str_rf_train = classification_report(y_train, y_train_preds_rf)
@@ -249,6 +370,26 @@ def roc_curve_plot(lrc:LogisticRegression, rfc:RandomForestClassifier, X_test:Da
     output:
         None
     '''
+
+    try:
+        check_is_fitted(lrc)
+    except NotFittedError:
+        logging.error('ERROR: Logistic regressor is not fitted!')
+    try:
+        check_is_fitted(rfc)
+    except NotFittedError:
+        logging.error('ERROR: Random forest is not fitted!')
+    try:
+        assert len(X_test) == len(y_test)
+    except AssertionError:
+        logging.error('ERROR: X_train and y_train are different length for roc plot!')
+        raise AssertionError
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
@@ -269,6 +410,22 @@ def feature_importance_plot(rfc:RandomForestClassifier, X_data:DataFrame, impth:
     output:
              None
     '''
+
+    try:
+        check_is_fitted(rfc)
+    except NotFittedError:
+        logging.error('ERROR: Random forest is not fitted!')
+        raise NotFittedError
+    try:
+        assert not X_data.empty
+    except AssertionError:
+        logging.error('ERROR: Empty X_data passed to feature importance!')
+        raise AssertionError
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
 
     # Calculate feature importances
     importances = rfc.best_estimator_.feature_importances_
@@ -296,6 +453,29 @@ def explainer_plot(rfc:RandomForestClassifier, X_test:DataFrame, impth:str):
     outputs:
         None
     '''
+
+    try:
+        check_is_fitted(rfc)
+    except NotFittedError:
+        logging.error('ERROR: Random forest is not fitted!')
+        raise NotFittedError
+    try:
+        assert not X_test.empty
+    except AssertionError:
+        logging.error('ERROR: Empty X_data passed to feature importance!')
+        raise AssertionError
+    try:
+        rfc.predict(X_test)
+    except ValueError:
+        logging.error('ERROR: X_test is malformed for fitting with random forest classifier!')
+        raise ValueError
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+
+    plt.figure(figsize=(8, 12))
     explainer = shap.TreeExplainer(rfc.best_estimator_)
     shap_values = explainer.shap_values(X_test)
     shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
@@ -318,6 +498,32 @@ def train_models(X_train:DataFrame, X_test:DataFrame, y_train:DataFrame, y_test:
               None
     '''
 
+    try:
+        assert len(X_train) == len(y_train)
+    except AssertionError:
+        logging.error('ERROR: X_train and y_train have different lengths, cannot train models!')
+        raise AssertionError
+    try:
+        assert len(X_test) == len(y_test)
+    except AssertionError:
+        logging.error('ERROR: X_test and y_test have different lengths, cannot test models!')
+        raise AssertionError
+    try:
+        assert len(param_grid) > 0
+    except AssertionError:
+        logging.error('ERROR: Empty parameter grid passed to grid search!')
+        raise AssertionError
+    try:
+        assert Path(modelpth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s model save path does not exist!'%modelpth)
+        raise AssertionError
+    try:
+        assert Path(impth).is_dir()
+    except AssertionError:
+        logging.error('ERROR: %s image save path does not exist!'%impth)
+        raise AssertionError
+
     # Fit the models
     rfc = RandomForestClassifier(random_state=42)
     lrc = LogisticRegression()
@@ -326,7 +532,7 @@ def train_models(X_train:DataFrame, X_test:DataFrame, y_train:DataFrame, y_test:
     lrc.fit(X_train, y_train)
     
     # Save trained models
-    joblib.dump(cv_rfc.best_estimator_, modelpth + 'rfc_model.pkl')
+    joblib.dump(cv_rfc, modelpth + 'rfc_model.pkl')
     joblib.dump(lrc, modelpth + 'logistic_model.pkl')
 
     # Make predictions, to evaluate performance
@@ -346,7 +552,15 @@ def train_models(X_train:DataFrame, X_test:DataFrame, y_train:DataFrame, y_test:
 
 if __name__ == '__main__':
 
+    save_test_data = False
+
     customer_churn = import_data(path_to_data)
     perform_eda(customer_churn, image_save_path)
     X_train, X_test, y_train, y_test = perform_feature_engineering(customer_churn, cat_columns, quant_columns, resp_col)
+
+    if save_test_data:
+        X_train.to_csv('./data/X_train.csv')
+        X_test.to_csv('./data/X_test.csv')
+        y_train.to_csv('./data/y_train.csv')
+        y_test.to_csv('./data/y_test.csv')
     train_models(X_train, X_test, y_train, y_test, param_grid, image_save_path, model_save_path)
