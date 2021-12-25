@@ -32,7 +32,7 @@ import logging
 from pathlib import Path
 
 logging.basicConfig(
-    filename='./logging.log'
+    filename='./logs/logging.log'
 )
 
 def import_data(pth:str):
@@ -68,7 +68,7 @@ def perform_eda(customer_churn:DataFrame, impth:str):
         assert Path(impth).is_dir()
     except AssertionError:
         logging.error('ERROR: %s image save path does not exist!'%impth)
-        raise AssertionError
+        raise FileNotFoundError
     try:
         for col in customer_churn.columns:
             if is_numeric_dtype(customer_churn[col]):
@@ -194,7 +194,7 @@ def plot_heatmap(customer_churn:DataFrame, impth:str):
     plt.close();
     pass
 
-def filter_columns(customer_churn:DataFrame, category_lst:list, quant_lst:list, response:str):
+def filter_encode_columns(customer_churn:DataFrame, category_lst:list, quant_lst:list, response:str):
     '''
     split dataframe into valid inputs and outputs for fitting
 
@@ -258,7 +258,7 @@ def perform_feature_engineering(customer_churn:DataFrame, category_lst:list, qua
         y_test: y testing data
     '''
     try:
-        X, y = filter_columns(customer_churn, category_lst, quant_lst, response)
+        X, y = filter_encode_columns(customer_churn, category_lst, quant_lst, response)
     except KeyError:
         logging.error('ERROR: Could not filter data and engineer columns!')
         raise KeyError
@@ -388,7 +388,7 @@ def roc_curve_plot(lrc:LogisticRegression, rfc:RandomForestClassifier, X_test:Da
         assert Path(impth).is_dir()
     except AssertionError:
         logging.error('ERROR: %s image save path does not exist!'%impth)
-        raise AssertionError
+        raise FileNotFoundError
 
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
@@ -517,12 +517,12 @@ def train_models(X_train:DataFrame, X_test:DataFrame, y_train:DataFrame, y_test:
         assert Path(modelpth).is_dir()
     except AssertionError:
         logging.error('ERROR: %s model save path does not exist!'%modelpth)
-        raise AssertionError
+        raise FileNotFoundError
     try:
         assert Path(impth).is_dir()
     except AssertionError:
         logging.error('ERROR: %s image save path does not exist!'%impth)
-        raise AssertionError
+        raise FileNotFoundError
 
     # Fit the models
     rfc = RandomForestClassifier(random_state=42)
@@ -552,15 +552,7 @@ def train_models(X_train:DataFrame, X_test:DataFrame, y_train:DataFrame, y_test:
 
 if __name__ == '__main__':
 
-    save_test_data = False
-
     customer_churn = import_data(path_to_data)
     perform_eda(customer_churn, image_save_path)
     X_train, X_test, y_train, y_test = perform_feature_engineering(customer_churn, cat_columns, quant_columns, resp_col)
-
-    if save_test_data:
-        X_train.to_csv('./data/X_train.csv')
-        X_test.to_csv('./data/X_test.csv')
-        y_train.to_csv('./data/y_train.csv')
-        y_test.to_csv('./data/y_test.csv')
     train_models(X_train, X_test, y_train, y_test, param_grid, image_save_path, model_save_path)

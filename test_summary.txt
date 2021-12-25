@@ -2,9 +2,9 @@
 platform win32 -- Python 3.8.8, pytest-6.2.3, py-1.10.0, pluggy-0.13.1
 rootdir: C:\Users\jersmit\OneDrive - KLA Corporation\Desktop\repos\udacity_mlDevOps_pr1
 plugins: anyio-2.2.0, dash-2.0.0
-collected 10 items
+collected 9 items
 
-bin\test_churn_library.py ..........                                     [100%]
+bin\test_churn_library.py .........                                      [100%]
 
 ============================== warnings summary ===============================
 ..\..\..\..\Anaconda3\lib\site-packages\pyreadline\py3k_compat.py:8
@@ -30,4 +30,4 @@ bin/test_churn_library.py::test_train_models
       https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 
 -- Docs: https://docs.pytest.org/en/stable/warnings.html
-================ 10 passed, 139 warnings in 1587.96s (0:26:27) ================
+================ 9 passed, 139 warnings in 1658.30s (0:27:38) =================
