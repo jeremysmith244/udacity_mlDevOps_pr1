@@ -30,4 +30,4 @@ bin/test_churn_library.py::test_train_models
       https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 
 -- Docs: https://docs.pytest.org/en/stable/warnings.html
-================ 9 passed, 139 warnings in 1658.30s (0:27:38) =================
+================ 9 passed, 139 warnings in 1591.62s (0:26:31) =================

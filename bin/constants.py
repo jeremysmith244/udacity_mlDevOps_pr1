@@ -1,5 +1,3 @@
-import pandas as pd
-
 cat_columns = [
     'Gender',
     'Education_Level',
@@ -27,7 +25,7 @@ quant_columns = [
 
 resp_col = 'Churn'
 
-param_grid = { 
+grid_search_parameters = { 
     'n_estimators': [200, 500],
     'max_features': ['auto', 'sqrt'],
     'max_depth' : [4,5,100],
