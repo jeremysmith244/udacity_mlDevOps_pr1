@@ -1,0 +1,73 @@
+============================= test session starts =============================
+platform win32 -- Python 3.8.8, pytest-6.2.3, py-1.10.0, pluggy-0.13.1
+rootdir: C:\Users\jersmit\OneDrive - KLA Corporation\Desktop\repos\udacity_mlDevOps_pr1
+plugins: anyio-2.2.0, dash-2.0.0
+collected 9 items
+
+bin/test_churn_library.py::test_import_data 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:57 Testing import_data: SUCCESS
+INFO     root:test_churn_library.py:74 Testing import_data: All expected columns are present
+PASSED
+bin/test_churn_library.py::test_perform_eda 
+-------------------------------- live log call --------------------------------
+INFO     numexpr.utils:utils.py:145 Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+INFO     numexpr.utils:utils.py:157 NumExpr defaulting to 8 threads.
+INFO     root:test_churn_library.py:91 Testing perform_eda: SUCCESS
+INFO     root:test_churn_library.py:106 Testing perform_eda: At least one image was created for eda
+PASSED
+bin/test_churn_library.py::test_filter_encode_columns 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:125 Testing filter_encode_columns: SUCCESS
+PASSED
+bin/test_churn_library.py::test_feature_engineering 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:158 Testing feature_engineering: SUCCESS
+PASSED
+bin/test_churn_library.py::test_train_models 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:197 Testing test_train_model: SUCCESS
+INFO     root:test_churn_library.py:214 Testing test_train_model: Models were saved successfully
+PASSED
+bin/test_churn_library.py::test_classification_report_image 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:239 Testing classification_report_image: SUCCESS
+PASSED
+bin/test_churn_library.py::test_roc_curve_plot 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:273 Testing roc_curve_plot: SUCCESS
+PASSED
+bin/test_churn_library.py::test_feature_importance_plot 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:304 Testing feature_importance_plot: SUCCESS
+PASSED
+bin/test_churn_library.py::test_feature_explainer_plot 
+-------------------------------- live log call --------------------------------
+INFO     root:test_churn_library.py:336 Testing feature_explainer_plot: SUCCESS
+PASSED
+
+============================== warnings summary ===============================
+..\..\..\..\Anaconda3\lib\site-packages\pyreadline\py3k_compat.py:8
+  C:\Users\jersmit\Anaconda3\lib\site-packages\pyreadline\py3k_compat.py:8: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.9 it will stop working
+    return isinstance(x, collections.Callable)
+
+bin/test_churn_library.py: 15 warnings
+  `distplot` is a deprecated function and will be removed in a future version. Please adapt your code to use either `displot` (a figure-level function with similar flexibility) or `histplot` (an axes-level function for histograms).
+
+bin/test_churn_library.py: 121 warnings
+  A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
+
+bin/test_churn_library.py::test_train_models
+  A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+
+bin/test_churn_library.py::test_train_models
+  lbfgs failed to converge (status=1):
+  STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.
+  
+  Increase the number of iterations (max_iter) or scale the data as shown in:
+      https://scikit-learn.org/stable/modules/preprocessing.html
+  Please also refer to the documentation for alternative solver options:
+      https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+================ 9 passed, 139 warnings in 1660.53s (0:27:40) =================

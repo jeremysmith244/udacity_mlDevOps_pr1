@@ -16,9 +16,9 @@ from churn_library import import_data, perform_eda, perform_feature_engineering,
 logging.basicConfig(
     filename='./logs/churn_library.log',
     level=logging.INFO,
-    filemode='w',
-    format='%(name)s - %(levelname)s - %(message)s')
+    filemode='w')
 
+LOGGER = logging.getLogger()
 
 def delete_images():
     '''
@@ -54,16 +54,16 @@ def test_import_data():
     '''
     try:
         customer_churn = import_data(path_to_data)
-        logging.info("Testing import_data: SUCCESS")
+        LOGGER.info("Testing import_data: SUCCESS")
     except FileNotFoundError as err:
-        logging.error("Testing import_eda: The file wasn't found")
+        LOGGER.error("Testing import_eda: The file wasn't found")
         raise err
 
     try:
         assert customer_churn.shape[0] > 0
         assert customer_churn.shape[1] > 0
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing import_data: Not enough rows and columns")
         raise err
 
@@ -71,9 +71,9 @@ def test_import_data():
         expected_columns = cat_columns + quant_columns + [resp_col]
         for col in expected_columns:
             assert col in customer_churn.columns
-        logging.info("Testing import_data: All expected columns are present")
+        LOGGER.info("Testing import_data: All expected columns are present")
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing import_data: Columns in data do not match constants")
         raise err
 
@@ -88,13 +88,13 @@ def test_perform_eda():
     try:
         customer_churn = import_data(path_to_data)
         perform_eda(customer_churn, image_save_path)
-        logging.info("Testing perform_eda: SUCCESS")
+        LOGGER.info("Testing perform_eda: SUCCESS")
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             "Testing perform_eda: Data file or image save directory not found")
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing perform_eda: Plots failed to render, check input data")
         raise err
 
@@ -103,10 +103,10 @@ def test_perform_eda():
     try:
         num_images = len(list(image_pth.glob('*.png')))
         assert num_images > 0
-        logging.info(
+        LOGGER.info(
             "Testing perform_eda: At least one image was created for eda")
     except AssertionError as err:
-        logging.error("Testing perform_eda: No images created")
+        LOGGER.error("Testing perform_eda: No images created")
         raise err
 
     # Delete all images again
@@ -122,16 +122,16 @@ def test_filter_encode_columns():
         X, y = filter_encode_columns(
             customer_churn, cat_columns, quant_columns, resp_col)
         assert not X.empty or y.empty
-        logging.info('Testing filter_encode_columns: SUCCESS')
+        LOGGER.info('Testing filter_encode_columns: SUCCESS')
     except FileNotFoundError as err:
-        logging.error("Testing filter_encode_columns: Data file not found")
+        LOGGER.error("Testing filter_encode_columns: Data file not found")
         raise err
     except KeyError as err:
-        logging.error(
+        LOGGER.error(
             "Testing filter_encode_columns: Columns are missing, check input")
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing filter_encode_columns: Filtered data empty, check inputs")
         raise err
 
@@ -155,20 +155,20 @@ def test_feature_engineering():
         y_test.to_csv('./data/y_test.csv')
 
         assert not X_train.empty or y_train.empty or X_test.empty or y_test.empty
-        logging.info('Testing feature_engineering: SUCCESS')
+        LOGGER.info('Testing feature_engineering: SUCCESS')
     except FileNotFoundError as err:
-        logging.error("Testing feature_engineering: Data file not found")
+        LOGGER.error("Testing feature_engineering: Data file not found")
         raise err
     except KeyError as err:
-        logging.error(
+        LOGGER.error(
             "Testing feature_engineering: Check filter_encode function")
         raise err
     except ValueError as err:
-        logging.error(
+        LOGGER.error(
             "Testing feature_engineering: Input data too few rows to split")
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing feature_engineering: Filtered data appears empty")
         raise err
 
@@ -194,14 +194,14 @@ def test_train_models():
             grid_search_parameters,
             image_save_path,
             model_save_path)
-        logging.info('Testing test_train_model: SUCCESS')
+        LOGGER.info('Testing test_train_model: SUCCESS')
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing test_train_model: Check feature_engineering complete
                and image,model directory exists''')
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing test_train_model: Could not fit model,
                check input data shapes and parameters''')
         raise err
@@ -211,10 +211,10 @@ def test_train_models():
         mod_pth = Path(model_save_path)
         num_models = len(list(mod_pth.glob('*.pkl')))
         assert num_models == 2
-        logging.info(
+        LOGGER.info(
             "Testing test_train_model: Models were saved successfully")
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing test_train_model: Expected 2 model files saved, found %s",
             num_models)
         raise err
@@ -236,14 +236,14 @@ def test_classification_report_image():
         image_pth = Path(image_save_path)
         num_images = len(list(image_pth.glob('*.png')))
         assert num_images == 2
-        logging.info('Testing classification_report_image: SUCCESS')
+        LOGGER.info('Testing classification_report_image: SUCCESS')
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing classification_report_image: Data file not found,
                check feature_engineering''')
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing classification_report_image:
                Images were not created as expected''')
 
@@ -270,14 +270,14 @@ def test_roc_curve_plot():
         image_pth = Path(image_save_path)
         num_images = len(list(image_pth.glob('*.png')))
         assert num_images == 1
-        logging.info('Testing roc_curve_plot: SUCCESS')
+        LOGGER.info('Testing roc_curve_plot: SUCCESS')
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing roc_curve_plot: Data files not found,
                check feature_engineering and model training''')
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing roc_curve_plot: Images were not created as expected")
 
     # Delete all images
@@ -301,14 +301,14 @@ def test_feature_importance_plot():
         image_pth = Path(image_save_path)
         num_images = len(list(image_pth.glob('*.png')))
         assert num_images == 1
-        logging.info('Testing feature_importance_plot: SUCCESS')
+        LOGGER.info('Testing feature_importance_plot: SUCCESS')
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing feature_importance_plot: Data files not found,
                check feature_engineering and model training''')
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing feature_importance_plot: Images were not created")
         raise err
 
@@ -333,14 +333,14 @@ def test_feature_explainer_plot():
         image_pth = Path(image_save_path)
         num_images = len(list(image_pth.glob('*.png')))
         assert num_images == 1
-        logging.info('Testing feature_explainer_plot: SUCCESS')
+        LOGGER.info('Testing feature_explainer_plot: SUCCESS')
     except FileNotFoundError as err:
-        logging.error(
+        LOGGER.error(
             '''Testing feature_explainer_plot: Data files not found,
                check feature_engineering and model training''')
         raise err
     except AssertionError as err:
-        logging.error(
+        LOGGER.error(
             "Testing feature_explainer_plot: Images were not created")
         raise err
 

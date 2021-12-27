@@ -1,0 +1,1 @@
+pytest --capture=no --log-cli-level=INFO > ./logs/test_summary.txt
